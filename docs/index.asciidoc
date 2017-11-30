@@ -1,0 +1,5 @@
+= Rabbitmqbeat Docs
+
+Welcome to the Rabbitmqbeat documentation.
+
+
