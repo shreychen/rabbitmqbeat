@@ -15,6 +15,7 @@ type Rabbitmqbeat struct {
 	done   chan struct{}
 	config config.Config
 	client beat.Client
+	api    Api
 }
 
 // Creates beater
@@ -24,9 +25,12 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 		return nil, fmt.Errorf("Error reading config file: %v", err)
 	}
 
+	api := NewRMQClient(config.URL, config.Username, config.Password)
+
 	bt := &Rabbitmqbeat{
 		done:   make(chan struct{}),
 		config: config,
+		api:    api,
 	}
 	return bt, nil
 }
@@ -49,16 +53,55 @@ func (bt *Rabbitmqbeat) Run(b *beat.Beat) error {
 		case <-ticker.C:
 		}
 
-		event := beat.Event{
-			Timestamp: time.Now(),
-			Fields: common.MapStr{
-				"type":    b.Info.Name,
-				"counter": counter,
-			},
+		//		event := beat.Event{
+		//			Timestamp: time.Now(),
+		//			Fields: common.MapStr{
+		//				"type":    b.Info.Name,
+		//				"counter": counter,
+		//			},
+		//		}
+		//		bt.client.Publish(event)
+		//		logp.Info("Event sent")
+		//		counter++
+
+		// send overview metrics
+		if bt.config.Overview {
+			event := beat.Event{
+				Timestamp: time.Now(),
+				Fields: common.MapStr{
+					"type":     b.Info.Name,
+					"overview": counter,
+				},
+			}
+			bt.client.Publish(event)
+			logp.Info("Overview event sent")
 		}
-		bt.client.Publish(event)
-		logp.Info("Event sent")
-		counter++
+
+		// send nodes metrics
+		if bt.config.Nodes {
+			event := beat.Event{
+				Timestamp: time.Now(),
+				Fields: common.MapStr{
+					"type":  b.Info.Name,
+					"nodes": counter,
+				},
+			}
+			bt.client.Publish(event)
+			logp.Info("Nodes event sent")
+		}
+
+		// send queues metrics
+		if bt.config.Queues {
+			event := beat.Event{
+				Timestamp: time.Now(),
+				Fields: common.MapStr{
+					"type":   b.Info.Name,
+					"queues": counter,
+				},
+			}
+			bt.client.Publish(event)
+			logp.Info("Queues event sent")
+		}
 	}
 }
 
