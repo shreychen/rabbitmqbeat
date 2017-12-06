@@ -45,7 +45,7 @@ func (bt *Rabbitmqbeat) Run(b *beat.Beat) error {
 	}
 
 	ticker := time.NewTicker(bt.config.Period)
-	counter := 1
+	//	counter := 1
 	for {
 		select {
 		case <-bt.done:
@@ -66,41 +66,47 @@ func (bt *Rabbitmqbeat) Run(b *beat.Beat) error {
 
 		// send overview metrics
 		if bt.config.Overview {
-			event := beat.Event{
-				Timestamp: time.Now(),
-				Fields: common.MapStr{
-					"type":     b.Info.Name,
-					"overview": counter,
-				},
+			if overview, err := bt.api.Overview(); err == nil {
+				event := beat.Event{
+					Timestamp: time.Now(),
+					Fields: common.MapStr{
+						"type":     b.Info.Name,
+						"overview": overview,
+					},
+				}
+				bt.client.Publish(event)
+				logp.Info("Overview event sent")
 			}
-			bt.client.Publish(event)
-			logp.Info("Overview event sent")
 		}
 
 		// send nodes metrics
 		if bt.config.Nodes {
-			event := beat.Event{
-				Timestamp: time.Now(),
-				Fields: common.MapStr{
-					"type":  b.Info.Name,
-					"nodes": counter,
-				},
+			if nodes, err := bt.api.Nodes(); err == nil {
+				event := beat.Event{
+					Timestamp: time.Now(),
+					Fields: common.MapStr{
+						"type":  b.Info.Name,
+						"nodes": nodes,
+					},
+				}
+				bt.client.Publish(event)
+				logp.Info("Nodes event sent")
 			}
-			bt.client.Publish(event)
-			logp.Info("Nodes event sent")
 		}
 
 		// send queues metrics
 		if bt.config.Queues {
-			event := beat.Event{
-				Timestamp: time.Now(),
-				Fields: common.MapStr{
-					"type":   b.Info.Name,
-					"queues": counter,
-				},
+			if queues, err := bt.api.Queues(); err == nil {
+				event := beat.Event{
+					Timestamp: time.Now(),
+					Fields: common.MapStr{
+						"type":   b.Info.Name,
+						"queues": queues,
+					},
+				}
+				bt.client.Publish(event)
+				logp.Info("Queues event sent")
 			}
-			bt.client.Publish(event)
-			logp.Info("Queues event sent")
 		}
 	}
 }
