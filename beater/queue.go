@@ -1,8 +1,6 @@
 package beater
 
 import (
-	//	"regexp"
-
 	"github.com/elastic/beats/libbeat/common"
 
 	"github.com/elastic/beats/libbeat/logp"
@@ -11,9 +9,13 @@ import (
 const logSelector = "json"
 
 func (bt *Rabbitmqbeat) Queues() ([]common.MapStr, error) {
-	_, err := bt.api.Queues()
+	queues, err := bt.api.Queues()
 
-	logp.Debug("json", "filters:%s", bt.config.Filters)
+	logp.Debug(logSelector, "filters:%s", bt.config.Filters)
+
+	for _, f := range bt.config.Filters {
+		queues = f.Do(queues)
+	}
 
 	if err != nil {
 		logp.Debug(logSelector, "get queues metrics failed ,caused by: %s", err.Error())
