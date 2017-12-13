@@ -96,7 +96,7 @@ func (bt *Rabbitmqbeat) Run(b *beat.Beat) error {
 
 		// send queues metrics
 		if bt.config.Queues {
-			if queues, err := bt.api.Queues(); err == nil {
+			if queues, err := bt.Queues(); err == nil {
 				event := beat.Event{
 					Timestamp: time.Now(),
 					Fields: common.MapStr{

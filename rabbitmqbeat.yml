@@ -4,16 +4,16 @@
 
 rabbitmqbeat:
   # Defines how often an event is sent to the output
-  period: 1s
+  period: 5s
   # Defines the rabbitmq management URL
   url: "http://localhost:15672"
   # Defines the username/password 
   username: guest
   password: guest
   # Whether to collect overview metrics of not
-  overview: true
+  overview: false
   # Whether to collect nodes metrics of not
-  nodes: true
+  nodes: false
   # Whether to collect queues metrics of not
   queues: true
   # Defines filters

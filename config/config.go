@@ -41,30 +41,44 @@ var DefaultConfig = Config{
 	Queues:   true,
 }
 
+//func RemoveOne(cm *[]common.MapStr, i int) {
+//	(*cm)[len(*cm)-1], (*cm)[i] = (*cm)[i], (*cm)[len(*cm)-1]
+//	(*cm) = (*cm)[:len(*cm)-1]
+//}
+
 func RemoveOne(cm []common.MapStr, i int) []common.MapStr {
 	cm[len(cm)-1], cm[i] = cm[i], cm[len(cm)-1]
 	return cm[:len(cm)-1]
 }
 
-func (f *Filter) Do(cm []common.MapStr) []common.MapStr {
+func (f *Filter) Do(cm []common.MapStr) ([]common.MapStr, error) {
 	reg, err := regexp.Compile(f.Exp)
 	if err != nil {
 		logp.Debug(logSelector, "regexp compile failed: %s", err.Error())
-		return cm
+		return cm, err
 	}
 
+	time.Sleep(time.Second * 1)
+
+	logp.Debug(logSelector, "len: %v", len(cm))
 	for i, c := range cm {
+		if i >= len(cm) {
+			break
+		}
+		logp.Debug(logSelector, "i: %v, len: %v", i, len(cm))
 		qname, err := c.GetValue("name")
 
 		if err != nil {
+			logp.Debug(logSelector, "Get queue name failed: %s", err.Error())
 			continue
 		}
 		//		qname = qname.(string)
 		//		qname = fmt.Sprintf("%s", qname)
+		logp.Debug(logSelector, "queue name: %s", qname.(string))
 		if reg.Match([]byte(qname.(string))) {
 			cm = RemoveOne(cm, i)
-			logp.Debug("json", "removed metrics of queue: %s", qname)
+			logp.Debug(logSelector, "removed metrics of queue: %s", qname)
 		}
 	}
-	return cm
+	return cm, err
 }
